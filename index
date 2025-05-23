@@ -1,0 +1,253 @@
+import React, { useState, useEffect, useRef } from 'react';
+
+const ExtremeFlashAnzan = () => {
+  const [numbers, setNumbers] = useState([]);
+  const [currentIndex, setCurrentIndex] = useState(-1);
+  const [isRunning, setIsRunning] = useState(false);
+  const [userAnswer, setUserAnswer] = useState('');
+  const [correctSum, setCorrectSum] = useState('');
+  const [showResult, setShowResult] = useState(false);
+  const [isComplete, setIsComplete] = useState(false);
+  const intervalRef = useRef(null);
+
+  // 900桁のランダム数字を生成
+  const generateRandomNumber = () => {
+    let num = '';
+    // 最初の桁は1-9（先頭0を避ける）
+    num += Math.floor(Math.random() * 9) + 1;
+    // 残り899桁は0-9
+    for (let i = 1; i < 900; i++) {
+      num += Math.floor(Math.random() * 10);
+    }
+    return num;
+  };
+
+  // 大きな数の加算関数
+  const addBigNumbers = (num1, num2) => {
+    const arr1 = num1.split('').reverse();
+    const arr2 = num2.split('').reverse();
+    const result = [];
+    let carry = 0;
+    const maxLength = Math.max(arr1.length, arr2.length);
+
+    for (let i = 0; i < maxLength; i++) {
+      const digit1 = parseInt(arr1[i] || '0');
+      const digit2 = parseInt(arr2[i] || '0');
+      const sum = digit1 + digit2 + carry;
+      result.push(sum % 10);
+      carry = Math.floor(sum / 10);
+    }
+
+    if (carry > 0) {
+      result.push(carry);
+    }
+
+    return result.reverse().join('');
+  };
+
+  // 50個の900桁数字を生成し、合計を計算
+  const generateNumbers = () => {
+    const newNumbers = [];
+    for (let i = 0; i < 50; i++) {
+      newNumbers.push(generateRandomNumber());
+    }
+    
+    // 合計を計算
+    let sum = '0';
+    for (const num of newNumbers) {
+      sum = addBigNumbers(sum, num);
+    }
+    
+    setNumbers(newNumbers);
+    setCorrectSum(sum);
+    return newNumbers;
+  };
+
+  // フラッシュ開始
+  const startFlash = () => {
+    const nums = generateNumbers();
+    setCurrentIndex(0);
+    setIsRunning(true);
+    setShowResult(false);
+    setIsComplete(false);
+    setUserAnswer('');
+
+    let index = 0;
+    intervalRef.current = setInterval(() => {
+      if (index >= nums.length) {
+        setCurrentIndex(-1);
+        setIsRunning(false);
+        setIsComplete(true);
+        clearInterval(intervalRef.current);
+      } else {
+        setCurrentIndex(index);
+        index++;
+      }
+          }, 50); // 50ms間隔
+  };
+
+  // 停止
+  const stopFlash = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+    setIsRunning(false);
+    setCurrentIndex(-1);
+  };
+
+  // 結果表示
+  const showAnswer = () => {
+    setShowResult(true);
+  };
+
+  // リセット
+  const reset = () => {
+    stopFlash();
+    setNumbers([]);
+    setCurrentIndex(-1);
+    setUserAnswer('');
+    setShowResult(false);
+    setIsComplete(false);
+    setCorrectSum('');
+  };
+
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-red-900 via-black to-red-900 text-white p-8">
+      <div className="max-w-6xl mx-auto">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold mb-2 text-red-400">
+            🔥 EXTREME FLASH ANZAN 🔥
+          </h1>
+          <p className="text-xl text-red-300">
+            900桁 × 50個 × 50ms - 究極の高速暗算
+          </p>
+        </div>
+
+        {/* 数字表示エリア */}
+        <div className="bg-black border-4 border-red-500 rounded-lg p-8 mb-8 min-h-[300px] flex items-center justify-center">
+          {isRunning && currentIndex >= 0 && currentIndex < numbers.length ? (
+            <div className="text-center">
+              <div className="text-red-400 text-lg mb-2">
+                {currentIndex + 1} / 50
+              </div>
+              <div className="font-mono text-lg text-green-400 break-all leading-tight overflow-hidden">
+                {numbers[currentIndex]}
+              </div>
+            </div>
+          ) : isComplete ? (
+            <div className="text-center">
+              <div className="text-6xl mb-4">🎯</div>
+              <div className="text-2xl text-yellow-400">完了！</div>
+              <div className="text-lg text-gray-300 mt-2">
+                答えを入力してください
+              </div>
+            </div>
+          ) : (
+            <div className="text-center">
+              <div className="text-6xl mb-4">⚡</div>
+              <div className="text-2xl text-gray-400">
+                準備完了 - スタートを押してください
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* コントロール */}
+        <div className="flex flex-wrap justify-center gap-4 mb-8">
+          <button
+            onClick={startFlash}
+            disabled={isRunning}
+            className="px-8 py-3 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded-lg font-bold text-xl transition-colors"
+          >
+            {isRunning ? '実行中...' : 'スタート'}
+          </button>
+          
+          <button
+            onClick={stopFlash}
+            disabled={!isRunning}
+            className="px-8 py-3 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded-lg font-bold text-xl transition-colors"
+          >
+            ストップ
+          </button>
+          
+          <button
+            onClick={reset}
+            className="px-8 py-3 bg-gray-600 hover:bg-gray-700 rounded-lg font-bold text-xl transition-colors"
+          >
+            リセット
+          </button>
+        </div>
+
+        {/* 答え入力エリア */}
+        {isComplete && (
+          <div className="bg-gray-900 border-2 border-gray-700 rounded-lg p-6 mb-6">
+            <h3 className="text-xl font-bold mb-4 text-center">あなたの答え</h3>
+            <textarea
+              value={userAnswer}
+              onChange={(e) => setUserAnswer(e.target.value)}
+              placeholder="合計を入力してください..."
+              className="w-full h-32 p-4 bg-black border border-gray-600 rounded text-white font-mono resize-none"
+            />
+            <div className="text-center mt-4">
+              <button
+                onClick={showAnswer}
+                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg font-bold transition-colors"
+              >
+                正解を表示
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* 結果表示 */}
+        {showResult && (
+          <div className="bg-gray-900 border-2 border-gray-700 rounded-lg p-6">
+            <h3 className="text-xl font-bold mb-4 text-center">結果</h3>
+            
+            <div className="mb-4">
+              <div className="text-lg font-bold text-green-400 mb-2">正解:</div>
+              <div className="font-mono text-sm bg-black p-3 rounded border break-all">
+                {correctSum}
+              </div>
+            </div>
+            
+            <div className="mb-4">
+              <div className="text-lg font-bold text-blue-400 mb-2">あなたの答え:</div>
+              <div className="font-mono text-sm bg-black p-3 rounded border break-all">
+                {userAnswer || '(未入力)'}
+              </div>
+            </div>
+            
+            <div className="text-center">
+              {userAnswer === correctSum ? (
+                <div className="text-2xl text-green-400 font-bold">
+                  🎉 正解！！素晴らしい！ 🎉
+                </div>
+              ) : (
+                <div className="text-xl text-red-400 font-bold">
+                  💪 惜しい！再挑戦してみましょう！
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* 情報パネル */}
+        <div className="mt-8 text-center text-sm text-gray-400">
+          <p>⚠️ 極限設定: 900桁の数字を50個、各50ms（0.05秒）で表示</p>
+          <p>総表示時間: わずか2.5秒！人間の限界を完全に超越！</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ExtremeFlashAnzan;
