@@ -1,253 +1,453 @@
-import React, { useState, useEffect, useRef } from 'react';
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔥 EXTREME FLASH ANZAN 🔥</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-const ExtremeFlashAnzan = () => {
-  const [numbers, setNumbers] = useState([]);
-  const [currentIndex, setCurrentIndex] = useState(-1);
-  const [isRunning, setIsRunning] = useState(false);
-  const [userAnswer, setUserAnswer] = useState('');
-  const [correctSum, setCorrectSum] = useState('');
-  const [showResult, setShowResult] = useState(false);
-  const [isComplete, setIsComplete] = useState(false);
-  const intervalRef = useRef(null);
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #7f1d1d, #000000, #7f1d1d);
+            color: white;
+            min-height: 100vh;
+            padding: 2rem;
+        }
 
-  // 900桁のランダム数字を生成
-  const generateRandomNumber = () => {
-    let num = '';
-    // 最初の桁は1-9（先頭0を避ける）
-    num += Math.floor(Math.random() * 9) + 1;
-    // 残り899桁は0-9
-    for (let i = 1; i < 900; i++) {
-      num += Math.floor(Math.random() * 10);
-    }
-    return num;
-  };
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
 
-  // 大きな数の加算関数
-  const addBigNumbers = (num1, num2) => {
-    const arr1 = num1.split('').reverse();
-    const arr2 = num2.split('').reverse();
-    const result = [];
-    let carry = 0;
-    const maxLength = Math.max(arr1.length, arr2.length);
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
 
-    for (let i = 0; i < maxLength; i++) {
-      const digit1 = parseInt(arr1[i] || '0');
-      const digit2 = parseInt(arr2[i] || '0');
-      const sum = digit1 + digit2 + carry;
-      result.push(sum % 10);
-      carry = Math.floor(sum / 10);
-    }
+        .title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #f87171;
+            margin-bottom: 0.5rem;
+        }
 
-    if (carry > 0) {
-      result.push(carry);
-    }
+        .subtitle {
+            font-size: 1.25rem;
+            color: #fca5a5;
+        }
 
-    return result.reverse().join('');
-  };
+        .display-area {
+            background: #000000;
+            border: 4px solid #dc2626;
+            border-radius: 0.5rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            min-height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-  // 50個の900桁数字を生成し、合計を計算
-  const generateNumbers = () => {
-    const newNumbers = [];
-    for (let i = 0; i < 50; i++) {
-      newNumbers.push(generateRandomNumber());
-    }
-    
-    // 合計を計算
-    let sum = '0';
-    for (const num of newNumbers) {
-      sum = addBigNumbers(sum, num);
-    }
-    
-    setNumbers(newNumbers);
-    setCorrectSum(sum);
-    return newNumbers;
-  };
+        .number-display {
+            text-align: center;
+        }
 
-  // フラッシュ開始
-  const startFlash = () => {
-    const nums = generateNumbers();
-    setCurrentIndex(0);
-    setIsRunning(true);
-    setShowResult(false);
-    setIsComplete(false);
-    setUserAnswer('');
+        .counter {
+            color: #f87171;
+            font-size: 1.125rem;
+            margin-bottom: 0.5rem;
+        }
 
-    let index = 0;
-    intervalRef.current = setInterval(() => {
-      if (index >= nums.length) {
-        setCurrentIndex(-1);
-        setIsRunning(false);
-        setIsComplete(true);
-        clearInterval(intervalRef.current);
-      } else {
-        setCurrentIndex(index);
-        index++;
-      }
-          }, 50); // 50ms間隔
-  };
+        .number {
+            font-family: 'Courier New', monospace;
+            font-size: 1.125rem;
+            color: #4ade80;
+            word-break: break-all;
+            line-height: 1.2;
+            max-height: 200px;
+            overflow: hidden;
+        }
 
-  // 停止
-  const stopFlash = () => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-    }
-    setIsRunning(false);
-    setCurrentIndex(-1);
-  };
+        .status {
+            text-align: center;
+        }
 
-  // 結果表示
-  const showAnswer = () => {
-    setShowResult(true);
-  };
+        .status-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
 
-  // リセット
-  const reset = () => {
-    stopFlash();
-    setNumbers([]);
-    setCurrentIndex(-1);
-    setUserAnswer('');
-    setShowResult(false);
-    setIsComplete(false);
-    setCorrectSum('');
-  };
+        .status-text {
+            font-size: 1.5rem;
+        }
 
-  useEffect(() => {
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, []);
+        .ready { color: #9ca3af; }
+        .complete { color: #fbbf24; }
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-red-900 via-black to-red-900 text-white p-8">
-      <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-2 text-red-400">
-            🔥 EXTREME FLASH ANZAN 🔥
-          </h1>
-          <p className="text-xl text-red-300">
-            900桁 × 50個 × 50ms - 究極の高速暗算
-          </p>
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .btn {
+            padding: 0.75rem 2rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1.25rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .btn-start {
+            background: #dc2626;
+            color: white;
+        }
+
+        .btn-start:hover:not(:disabled) {
+            background: #b91c1c;
+        }
+
+        .btn-stop {
+            background: #ea580c;
+            color: white;
+        }
+
+        .btn-stop:hover:not(:disabled) {
+            background: #c2410c;
+        }
+
+        .btn-reset {
+            background: #4b5563;
+            color: white;
+        }
+
+        .btn-reset:hover {
+            background: #374151;
+        }
+
+        .btn:disabled {
+            background: #4b5563;
+            cursor: not-allowed;
+        }
+
+        .answer-section {
+            background: #111827;
+            border: 2px solid #374151;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .answer-input {
+            width: 100%;
+            height: 8rem;
+            padding: 1rem;
+            background: #000000;
+            border: 1px solid #4b5563;
+            border-radius: 0.25rem;
+            color: white;
+            font-family: 'Courier New', monospace;
+            resize: none;
+        }
+
+        .answer-input::placeholder {
+            color: #6b7280;
+        }
+
+        .btn-show {
+            background: #2563eb;
+            color: white;
+            margin-top: 1rem;
+        }
+
+        .btn-show:hover {
+            background: #1d4ed8;
+        }
+
+        .result-section {
+            background: #111827;
+            border: 2px solid #374151;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+        }
+
+        .result-item {
+            margin-bottom: 1rem;
+        }
+
+        .result-label {
+            font-size: 1.125rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .correct { color: #4ade80; }
+        .user { color: #60a5fa; }
+
+        .result-value {
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            background: #000000;
+            padding: 0.75rem;
+            border-radius: 0.25rem;
+            border: 1px solid #374151;
+            word-break: break-all;
+        }
+
+        .result-status {
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .success { color: #4ade80; }
+        .fail { color: #f87171; }
+
+        .info {
+            margin-top: 2rem;
+            text-align: center;
+            font-size: 0.875rem;
+            color: #9ca3af;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">🔥 EXTREME FLASH ANZAN 🔥</h1>
+            <p class="subtitle">900桁 × 50個 × 50ms - 究極の高速暗算</p>
         </div>
 
-        {/* 数字表示エリア */}
-        <div className="bg-black border-4 border-red-500 rounded-lg p-8 mb-8 min-h-[300px] flex items-center justify-center">
-          {isRunning && currentIndex >= 0 && currentIndex < numbers.length ? (
-            <div className="text-center">
-              <div className="text-red-400 text-lg mb-2">
-                {currentIndex + 1} / 50
-              </div>
-              <div className="font-mono text-lg text-green-400 break-all leading-tight overflow-hidden">
-                {numbers[currentIndex]}
-              </div>
+        <div class="display-area" id="displayArea">
+            <div class="status">
+                <div class="status-icon">⚡</div>
+                <div class="status-text ready">準備完了 - スタートを押してください</div>
             </div>
-          ) : isComplete ? (
-            <div className="text-center">
-              <div className="text-6xl mb-4">🎯</div>
-              <div className="text-2xl text-yellow-400">完了！</div>
-              <div className="text-lg text-gray-300 mt-2">
-                答えを入力してください
-              </div>
-            </div>
-          ) : (
-            <div className="text-center">
-              <div className="text-6xl mb-4">⚡</div>
-              <div className="text-2xl text-gray-400">
-                準備完了 - スタートを押してください
-              </div>
-            </div>
-          )}
         </div>
 
-        {/* コントロール */}
-        <div className="flex flex-wrap justify-center gap-4 mb-8">
-          <button
-            onClick={startFlash}
-            disabled={isRunning}
-            className="px-8 py-3 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded-lg font-bold text-xl transition-colors"
-          >
-            {isRunning ? '実行中...' : 'スタート'}
-          </button>
-          
-          <button
-            onClick={stopFlash}
-            disabled={!isRunning}
-            className="px-8 py-3 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded-lg font-bold text-xl transition-colors"
-          >
-            ストップ
-          </button>
-          
-          <button
-            onClick={reset}
-            className="px-8 py-3 bg-gray-600 hover:bg-gray-700 rounded-lg font-bold text-xl transition-colors"
-          >
-            リセット
-          </button>
+        <div class="controls">
+            <button class="btn btn-start" id="startBtn" onclick="startFlash()">スタート</button>
+            <button class="btn btn-stop" id="stopBtn" onclick="stopFlash()" disabled>ストップ</button>
+            <button class="btn btn-reset" onclick="reset()">リセット</button>
         </div>
 
-        {/* 答え入力エリア */}
-        {isComplete && (
-          <div className="bg-gray-900 border-2 border-gray-700 rounded-lg p-6 mb-6">
-            <h3 className="text-xl font-bold mb-4 text-center">あなたの答え</h3>
-            <textarea
-              value={userAnswer}
-              onChange={(e) => setUserAnswer(e.target.value)}
-              placeholder="合計を入力してください..."
-              className="w-full h-32 p-4 bg-black border border-gray-600 rounded text-white font-mono resize-none"
-            />
-            <div className="text-center mt-4">
-              <button
-                onClick={showAnswer}
-                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg font-bold transition-colors"
-              >
-                正解を表示
-              </button>
+        <div class="answer-section hidden" id="answerSection">
+            <h3 class="section-title">あなたの答え</h3>
+            <textarea id="userAnswer" class="answer-input" placeholder="合計を入力してください..."></textarea>
+            <div style="text-align: center;">
+                <button class="btn btn-show" onclick="showAnswer()">正解を表示</button>
             </div>
-          </div>
-        )}
+        </div>
 
-        {/* 結果表示 */}
-        {showResult && (
-          <div className="bg-gray-900 border-2 border-gray-700 rounded-lg p-6">
-            <h3 className="text-xl font-bold mb-4 text-center">結果</h3>
+        <div class="result-section hidden" id="resultSection">
+            <h3 class="section-title">結果</h3>
             
-            <div className="mb-4">
-              <div className="text-lg font-bold text-green-400 mb-2">正解:</div>
-              <div className="font-mono text-sm bg-black p-3 rounded border break-all">
-                {correctSum}
-              </div>
+            <div class="result-item">
+                <div class="result-label correct">正解:</div>
+                <div class="result-value" id="correctAnswer"></div>
             </div>
             
-            <div className="mb-4">
-              <div className="text-lg font-bold text-blue-400 mb-2">あなたの答え:</div>
-              <div className="font-mono text-sm bg-black p-3 rounded border break-all">
-                {userAnswer || '(未入力)'}
-              </div>
+            <div class="result-item">
+                <div class="result-label user">あなたの答え:</div>
+                <div class="result-value" id="userAnswerDisplay">(未入力)</div>
             </div>
             
-            <div className="text-center">
-              {userAnswer === correctSum ? (
-                <div className="text-2xl text-green-400 font-bold">
-                  🎉 正解！！素晴らしい！ 🎉
-                </div>
-              ) : (
-                <div className="text-xl text-red-400 font-bold">
-                  💪 惜しい！再挑戦してみましょう！
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* 情報パネル */}
-        <div className="mt-8 text-center text-sm text-gray-400">
-          <p>⚠️ 極限設定: 900桁の数字を50個、各50ms（0.05秒）で表示</p>
-          <p>総表示時間: わずか2.5秒！人間の限界を完全に超越！</p>
+            <div class="result-status" id="resultStatus"></div>
         </div>
-      </div>
+
+        <div class="info">
+            <p>⚠️ 極限設定: 900桁の数字を50個、各50ms（0.05秒）で表示</p>
+            <p>総表示時間: わずか2.5秒！人間の限界を完全に超越！</p>
+        </div>
     </div>
-  );
-};
 
-export default ExtremeFlashAnzan;
+    <script>
+        let numbers = [];
+        let currentIndex = -1;
+        let isRunning = false;
+        let correctSum = '';
+        let intervalId = null;
+
+        // 900桁のランダム数字を生成
+        function generateRandomNumber() {
+            let num = '';
+            // 最初の桁は1-9（先頭0を避ける）
+            num += Math.floor(Math.random() * 9) + 1;
+            // 残り899桁は0-9
+            for (let i = 1; i < 900; i++) {
+                num += Math.floor(Math.random() * 10);
+            }
+            return num;
+        }
+
+        // 大きな数の加算関数
+        function addBigNumbers(num1, num2) {
+            const arr1 = num1.split('').reverse();
+            const arr2 = num2.split('').reverse();
+            const result = [];
+            let carry = 0;
+            const maxLength = Math.max(arr1.length, arr2.length);
+
+            for (let i = 0; i < maxLength; i++) {
+                const digit1 = parseInt(arr1[i] || '0');
+                const digit2 = parseInt(arr2[i] || '0');
+                const sum = digit1 + digit2 + carry;
+                result.push(sum % 10);
+                carry = Math.floor(sum / 10);
+            }
+
+            if (carry > 0) {
+                result.push(carry);
+            }
+
+            return result.reverse().join('');
+        }
+
+        // 50個の900桁数字を生成し、合計を計算
+        function generateNumbers() {
+            const newNumbers = [];
+            for (let i = 0; i < 50; i++) {
+                newNumbers.push(generateRandomNumber());
+            }
+            
+            // 合計を計算
+            let sum = '0';
+            for (const num of newNumbers) {
+                sum = addBigNumbers(sum, num);
+            }
+            
+            numbers = newNumbers;
+            correctSum = sum;
+            return newNumbers;
+        }
+
+        // フラッシュ開始
+        function startFlash() {
+            generateNumbers();
+            currentIndex = 0;
+            isRunning = true;
+            
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('stopBtn').disabled = false;
+            document.getElementById('answerSection').classList.add('hidden');
+            document.getElementById('resultSection').classList.add('hidden');
+            document.getElementById('userAnswer').value = '';
+
+            let index = 0;
+            intervalId = setInterval(() => {
+                if (index >= numbers.length) {
+                    // 完了
+                    currentIndex = -1;
+                    isRunning = false;
+                    clearInterval(intervalId);
+                    
+                    document.getElementById('startBtn').disabled = false;
+                    document.getElementById('stopBtn').disabled = true;
+                    document.getElementById('displayArea').innerHTML = `
+                        <div class="status">
+                            <div class="status-icon">🎯</div>
+                            <div class="status-text complete">完了！</div>
+                            <div style="font-size: 1.125rem; color: #9ca3af; margin-top: 0.5rem;">
+                                答えを入力してください
+                            </div>
+                        </div>
+                    `;
+                    document.getElementById('answerSection').classList.remove('hidden');
+                } else {
+                    // 数字表示
+                    currentIndex = index;
+                    document.getElementById('displayArea').innerHTML = `
+                        <div class="number-display">
+                            <div class="counter">${index + 1} / 50</div>
+                            <div class="number">${numbers[index]}</div>
+                        </div>
+                    `;
+                    index++;
+                }
+            }, 50); // 50ms間隔
+        }
+
+        // 停止
+        function stopFlash() {
+            if (intervalId) {
+                clearInterval(intervalId);
+            }
+            isRunning = false;
+            currentIndex = -1;
+            
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+            document.getElementById('displayArea').innerHTML = `
+                <div class="status">
+                    <div class="status-icon">⚡</div>
+                    <div class="status-text ready">準備完了 - スタートを押してください</div>
+                </div>
+            `;
+        }
+
+        // 結果表示
+        function showAnswer() {
+            const userAnswer = document.getElementById('userAnswer').value;
+            
+            document.getElementById('correctAnswer').textContent = correctSum;
+            document.getElementById('userAnswerDisplay').textContent = userAnswer || '(未入力)';
+            
+            const resultStatus = document.getElementById('resultStatus');
+            if (userAnswer === correctSum) {
+                resultStatus.innerHTML = '🎉 正解！！素晴らしい！ 🎉';
+                resultStatus.className = 'result-status success';
+            } else {
+                resultStatus.innerHTML = '💪 惜しい！再挑戦してみましょう！';
+                resultStatus.className = 'result-status fail';
+            }
+            
+            document.getElementById('resultSection').classList.remove('hidden');
+        }
+
+        // リセット
+        function reset() {
+            if (intervalId) {
+                clearInterval(intervalId);
+            }
+            
+            numbers = [];
+            currentIndex = -1;
+            isRunning = false;
+            correctSum = '';
+            
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+            document.getElementById('userAnswer').value = '';
+            document.getElementById('answerSection').classList.add('hidden');
+            document.getElementById('resultSection').classList.add('hidden');
+            
+            document.getElementById('displayArea').innerHTML = `
+                <div class="status">
+                    <div class="status-icon">⚡</div>
+                    <div class="status-text ready">準備完了 - スタートを押してください</div>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
